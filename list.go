@@ -7,38 +7,37 @@ import (
 )
 
 // List represents a singly-linked list that holds
-// values of ordered type (string, int, float)
+// values of ordered type (string, int, float),
 // Implements Stringer interface
 type List[T constraints.Ordered] struct {
 	next *List[T]
 	val  T
 }
 
-// Index out of bounds error
+// Index out of bounds error,
 // Implements error interface
 type IndexError struct {
 	index int
 }
 
-// Invalid operation error
+// Invalid operation error,
 // Implements error interface
 type InvalidError struct {
 	op string
 }
 
-// Iterator for list
-// Efficient way to traverse linked list
+// Iterator for efficient traversal of linked list
 type Iterator[T constraints.Ordered] struct {
 	list *List[T]
 	ret  *List[T]
 }
 
-// Returns whether iterator has next element
+// Return whether iterator has next element
 func (iter *Iterator[T]) hasNext() bool {
 	return iter.list.next != nil
 }
 
-// Returns next element of iterator
+// Return next element of iterator
 func (iter *Iterator[T]) next() T {
 	// Do not increment if return value not set
 	if iter.ret != nil {
@@ -48,7 +47,7 @@ func (iter *Iterator[T]) next() T {
 	return iter.list.next.val
 }
 
-// Removes value last returned by iterator
+// Remove value last returned by iterator
 func (iter *Iterator[T]) remove() error {
 	if iter.ret == nil {
 		return &InvalidError{"remove"}
@@ -58,12 +57,12 @@ func (iter *Iterator[T]) remove() error {
 	return nil
 }
 
-// Returns error message
+// Return error message
 func (e *IndexError) Error() string {
 	return fmt.Sprintf("Index %v out of bounds in list", e.index)
 }
 
-// Returns error message
+// Return error message
 func (e *InvalidError) Error() string {
 	return fmt.Sprintf("Invalid operation: %v", e.op)
 }
@@ -94,8 +93,8 @@ func (list *List[T]) add(vs ...T) {
 	}
 }
 
-// Delete the first occurence of v
-// Returns whether deletion succeeded
+// Delete the first occurence of v,
+// Return whether deletion succeeded
 func (list *List[T]) delete(v T) bool {
 	for list != nil {
 		n := list.next
@@ -108,7 +107,7 @@ func (list *List[T]) delete(v T) bool {
 	return false
 }
 
-// Set index to v
+// Set index to v,
 // Return error if index out of bounds
 func (list *List[T]) set(index int, v T) (T, error) {
 	if index < 0 || index >= list.length() {
@@ -123,7 +122,7 @@ func (list *List[T]) set(index int, v T) (T, error) {
 	return old, nil
 }
 
-// Insert values at index
+// Insert values at index,
 // Return error if index out of bounds
 func (list *List[T]) insert(index int, vs ...T) error {
 	if index < 0 || index > list.length() {
@@ -160,7 +159,7 @@ func (list *List[T]) indexOf(v T) int {
 	return -1
 }
 
-// Get value at index
+// Get value at index,
 // Return error if index out of bounds
 func (list *List[T]) get(index int) (T, error) {
 	if index < 0 || index >= list.length() {
@@ -173,7 +172,7 @@ func (list *List[T]) get(index int) (T, error) {
 	return list.val, nil
 }
 
-// Remove element at index
+// Remove element at index,
 // Return error if index out of bounds
 func (list *List[T]) remove(index int) (T, error) {
 	if index < 0 || index >= list.length() {
@@ -284,132 +283,38 @@ func main() {
 	fmt.Println()
 
 	// Test append
-	fmt.Println("Testing append...")
-	fmt.Println("Add 1 and 2")
-	list.add(1)
-	list.add(2)
-	fmt.Println(list)
-	fmt.Println()
+	appendTest(&list)
 
 	// Test delete
-	fmt.Println("Testing delete...")
-	fmt.Println("Delete 1")
-	found := list.delete(1)
-	fmt.Println("Found:", found)
-	fmt.Println(list)
-	fmt.Println()
+	deleteTest(&list)
 
 	// Test set and error
-	fmt.Println("Testing set...")
-	fmt.Println("Set index 0 to 1")
-	elem, err := list.set(0, 1)
-	fmt.Println("Removed element:", elem)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-
-	fmt.Println("Set index 1 to 1")
-	elem, err = list.set(1, 1)
-	fmt.Println("Removed element:", elem)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-	fmt.Println()
+	setTest(&list)
 
 	// Test insert
 	// Note: Go does not support method overloading
-	fmt.Println("Testing insert...")
-	fmt.Println("Insert 2 at index 0")
-	err = list.insert(0, 2)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-
-	fmt.Println("Insert 3 at index 2")
-	err = list.insert(2, 3)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-
-	fmt.Println("Insert 4 at index 4")
-	err = list.insert(4, 4)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-	fmt.Println()
+	insertTest(&list)
 
 	// Test indexOf
-	fmt.Println("Testing indexOf...")
-	fmt.Println("Index of 1")
-	index := list.indexOf(1)
-	fmt.Println("Index:", index)
-	fmt.Println(list)
-
-	fmt.Println("Index of 0")
-	index = list.indexOf(0)
-	fmt.Println("Index:", index)
-	fmt.Println(list)
-	fmt.Println()
+	indexOfTest(&list)
 
 	// Test get (a bit late)
-	fmt.Println("Testing get...")
-	fmt.Println("Get index 0")
-	val, err := list.get(0)
-	fmt.Println("Value:", val)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-
-	fmt.Println("Get index 4")
-	val, err = list.get(4)
-	fmt.Println("Value:", val)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-	fmt.Println()
+	getTest(&list)
 
 	// Test variable arguments in add and insert
-	fmt.Println("Testing variable number of arguments...")
-	fmt.Println("Add 4 and 5")
-	list.add(4, 5)
-	fmt.Println(list)
-
-	fmt.Println("Insert 6 and 7 at index 0")
-	list.insert(0, 6, 7)
-	fmt.Println(list)
-	fmt.Println()
+	variableTest(&list)
 
 	// Test remove
-	fmt.Println("Testing remove...")
-	fmt.Println("Remove index 3")
-	elem, err = list.remove(3)
-	fmt.Println(list)
-	fmt.Println("Removed element:", elem)
-	fmt.Println("Error:", err)
-
-	fmt.Println("Remove index 6")
-	elem, err = list.remove(6)
-	fmt.Println(list)
-	fmt.Println("Removed element:", elem)
-	fmt.Println("Error:", err)
-	fmt.Println()
+	removeTest(&list)
 
 	// Test length
-	fmt.Println("Testing length...")
-	len := list.length()
-	fmt.Println("Length of list: ", len)
-	fmt.Println()
+	lengthTest(&list)
 
 	// Test all with generic type
-	var strings List[string]
-	fmt.Println(strings)
-	strings.add("goodbye", "cruel", "world")
-	fmt.Println(strings)
-	strings.delete("cruel")
-	fmt.Println(strings)
-	strings.set(0, "hello")
-	fmt.Println(strings)
-	strings.insert(1, "big", "beautiful")
-	fmt.Println(strings)
-	fmt.Println(strings.indexOf("world"))
-	str, err := strings.get(0)
-	fmt.Println(str)
-	strings.remove(1)
-	fmt.Println(strings)
-	fmt.Println()
+	genericTest()
+
+	// Test iterator
+	// iter := Iterator{*list, nil}
 
 	// // Test merge sort
 	// fmt.Println(list)
@@ -430,4 +335,141 @@ func main() {
 	// fmt.Println("Search for big")
 	// fmt.Println(strings.search("big"))
 	// fmt.Println()
+}
+func appendTest(list *List[int]) {
+	fmt.Println("Testing append...")
+	fmt.Println("Add 1 and 2")
+	list.add(1)
+	list.add(2)
+	fmt.Println(list)
+	fmt.Println()
+}
+
+func deleteTest(list *List[int]) {
+	fmt.Println("Testing delete...")
+	fmt.Println("Delete 1")
+	found := list.delete(1)
+	fmt.Println("Found:", found)
+	fmt.Println(list)
+	fmt.Println()
+}
+
+func setTest(list *List[int]) {
+	fmt.Println("Testing set...")
+	fmt.Println("Set index 0 to 1")
+	elem, err := list.set(0, 1)
+	fmt.Println("Removed element:", elem)
+	fmt.Println("Error:", err)
+	fmt.Println(list)
+
+	fmt.Println("Set index 1 to 1")
+	elem, err = list.set(1, 1)
+	fmt.Println("Removed element:", elem)
+	fmt.Println("Error:", err)
+	fmt.Println(list)
+	fmt.Println()
+}
+
+func insertTest(list *List[int]) {
+	fmt.Println("Testing insert...")
+	fmt.Println("Insert 2 at index 0")
+	err := list.insert(0, 2)
+	fmt.Println("Error:", err)
+	fmt.Println(list)
+
+	fmt.Println("Insert 3 at index 2")
+	err = list.insert(2, 3)
+	fmt.Println("Error:", err)
+	fmt.Println(list)
+
+	fmt.Println("Insert 4 at index 4")
+	err = list.insert(4, 4)
+	fmt.Println("Error:", err)
+	fmt.Println(list)
+	fmt.Println()
+}
+
+func indexOfTest(list *List[int]) {
+	fmt.Println("Testing indexOf...")
+	fmt.Println("Index of 1")
+	index := list.indexOf(1)
+	fmt.Println("Index:", index)
+	fmt.Println(list)
+
+	fmt.Println("Index of 0")
+	index = list.indexOf(0)
+	fmt.Println("Index:", index)
+	fmt.Println(list)
+	fmt.Println()
+}
+
+func getTest(list *List[int]) {
+	fmt.Println("Testing get...")
+	fmt.Println("Get index 0")
+	val, err := list.get(0)
+	fmt.Println("Value:", val)
+	fmt.Println("Error:", err)
+	fmt.Println(list)
+
+	fmt.Println("Get index 4")
+	val, err = list.get(4)
+	fmt.Println("Value:", val)
+	fmt.Println("Error:", err)
+	fmt.Println(list)
+	fmt.Println()
+}
+
+func variableTest(list *List[int]) {
+	fmt.Println("Testing variable number of arguments...")
+	fmt.Println("Add 4 and 5")
+	list.add(4, 5)
+	fmt.Println(list)
+
+	fmt.Println("Insert 6 and 7 at index 0")
+	list.insert(0, 6, 7)
+	fmt.Println(list)
+	fmt.Println()
+}
+
+func removeTest(list *List[int]) {
+	fmt.Println("Testing remove...")
+	fmt.Println("Remove index 3")
+	elem, err := list.remove(3)
+	fmt.Println(list)
+	fmt.Println("Removed element:", elem)
+	fmt.Println("Error:", err)
+
+	fmt.Println("Remove index 6")
+	elem, err = list.remove(6)
+	fmt.Println(list)
+	fmt.Println("Removed element:", elem)
+	fmt.Println("Error:", err)
+	fmt.Println()
+}
+
+func lengthTest(list *List[int]) {
+	fmt.Println("Testing length...")
+	len := list.length()
+	fmt.Println("Length of list: ", len)
+	fmt.Println()
+}
+
+func genericTest() {
+	var strings List[string]
+	fmt.Println(strings)
+	strings.add("goodbye", "cruel", "world")
+	fmt.Println(strings)
+	strings.delete("cruel")
+	fmt.Println(strings)
+	strings.set(0, "hello")
+	fmt.Println(strings)
+	strings.insert(1, "big", "beautiful")
+	fmt.Println(strings)
+	fmt.Println(strings.indexOf("world"))
+	str, err := strings.get(0)
+	fmt.Println(str)
+	fmt.Println("Error: ", err)
+	strings.remove(1)
+	fmt.Println(strings)
+	fmt.Println()
 }
