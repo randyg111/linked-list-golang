@@ -387,6 +387,12 @@ func main() {
 	fmt.Println("Error:", err)
 	fmt.Println()
 
+	// Test length
+	fmt.Println("Testing length...")
+	len := list.length()
+	fmt.Println("Length of list: ", len)
+	fmt.Println()
+
 	// Test all with generic type
 	var strings List[string]
 	fmt.Println(strings)
