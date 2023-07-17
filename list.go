@@ -278,10 +278,10 @@ func (list *List[T]) msort(lo, hi int) {
 // 	}
 // }
 
-// error panic, search, sort, iterator, splice
+// search, sort, splice, import package from github
 func main() {
 	// Initialize with dummy node
-	fmt.Println("Initializing...")
+	fmt.Println(red + "Initializing..." + reset)
 	var list List[int]
 	fmt.Println(list)
 	fmt.Println()
@@ -353,7 +353,7 @@ var gray = "\033[37m"
 var white = "\033[97m"
 
 func appendTest(list *List[int]) {
-	fmt.Println("Testing append...")
+	fmt.Println(red + "Testing append..." + reset)
 	fmt.Println("Add 1 and 2")
 	list.add(1)
 	list.add(2)
@@ -362,7 +362,7 @@ func appendTest(list *List[int]) {
 }
 
 func deleteTest(list *List[int]) {
-	fmt.Println("Testing delete...")
+	fmt.Println(red + "Testing delete..." + reset)
 	fmt.Println("Delete 1")
 	found := list.delete(1)
 	fmt.Println("Found:", found)
@@ -371,7 +371,7 @@ func deleteTest(list *List[int]) {
 }
 
 func setTest(list *List[int]) {
-	fmt.Println("Testing set...")
+	fmt.Println(red + "Testing set..." + reset)
 	fmt.Println("Set index 0 to 1")
 	elem, err := list.set(0, 1)
 	fmt.Println("Removed element:", elem)
@@ -387,7 +387,7 @@ func setTest(list *List[int]) {
 }
 
 func insertTest(list *List[int]) {
-	fmt.Println("Testing insert...")
+	fmt.Println(red + "Testing insert..." + reset)
 	fmt.Println("Insert 2 at index 0")
 	err := list.insert(0, 2)
 	fmt.Println("Error:", err)
@@ -406,7 +406,7 @@ func insertTest(list *List[int]) {
 }
 
 func indexOfTest(list *List[int]) {
-	fmt.Println("Testing indexOf...")
+	fmt.Println(red + "Testing indexOf..." + reset)
 	fmt.Println("Index of 1")
 	index := list.indexOf(1)
 	fmt.Println("Index:", index)
@@ -420,7 +420,7 @@ func indexOfTest(list *List[int]) {
 }
 
 func getTest(list *List[int]) {
-	fmt.Println("Testing get...")
+	fmt.Println(red + "Testing get..." + reset)
 	fmt.Println("Get index 0")
 	val, err := list.get(0)
 	fmt.Println("Value:", val)
@@ -436,7 +436,7 @@ func getTest(list *List[int]) {
 }
 
 func variableTest(list *List[int]) {
-	fmt.Println("Testing variable number of arguments...")
+	fmt.Println(red + "Testing variable number of arguments..." + reset)
 	fmt.Println("Add 4 and 5")
 	list.add(4, 5)
 	fmt.Println(list)
@@ -448,7 +448,7 @@ func variableTest(list *List[int]) {
 }
 
 func removeTest(list *List[int]) {
-	fmt.Println("Testing remove...")
+	fmt.Println(red + "Testing remove..." + reset)
 	fmt.Println("Remove index 3")
 	elem, err := list.remove(3)
 	fmt.Println(list)
@@ -464,13 +464,14 @@ func removeTest(list *List[int]) {
 }
 
 func lengthTest(list *List[int]) {
-	fmt.Println("Testing length...")
+	fmt.Println(red + "Testing length..." + reset)
 	len := list.length()
 	fmt.Println("Length of list: ", len)
 	fmt.Println()
 }
 
 func genericTest() {
+	fmt.Println(red + "Testing generic types..." + reset)
 	var strings List[string]
 	fmt.Println(strings)
 	strings.add("goodbye", "cruel", "world")
@@ -491,9 +492,10 @@ func genericTest() {
 }
 
 func iteratorTest(list *List[int]) {
-	fmt.Println("\033[31m" + "Testing iterator..." + "\033[0m")
+	fmt.Println(red + "Testing iterator..." + reset)
 	fmt.Println(list)
-	iter := Iterator[int]{list: list, ret: nil}
+	iter := Iterator[int]{list, nil}
+	fmt.Println("Get the next element")
 	val, err := iter.next()
 	fmt.Println(val)
 	fmt.Println("Error: ", err)
