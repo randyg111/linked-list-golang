@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	// "golang.org/x/exp/constraints"
+
+	"golang.org/x/exp/constraints"
 )
 
 // List represents a singly-linked list that holds
 // values of ordered type (string, int, float),
 // Implements Stringer interface
-type List[T comparable] struct {
+type List[T constraints.Ordered] struct {
 	next *List[T]
 	val  T
 }
@@ -27,7 +28,7 @@ type InvalidError struct {
 }
 
 // Iterator for efficient traversal of linked list
-type Iterator[T comparable] struct {
+type Iterator[T constraints.Ordered] struct {
 	list *List[T]
 	ret  *List[T]
 }
@@ -215,6 +216,36 @@ func (list *List[T]) sublist(index int) (*List[T], error) {
 	return list, nil
 }
 
+// Merge sort the list
+func (list *List[T]) sort() {
+	list.msort(0, list.length())
+}
+
+// Merge sort with recursion
+func (list *List[T]) msort(lo, hi int) {
+	if hi > lo {
+		mid := (hi + lo) / 2
+		list.msort(lo, mid)
+		list.msort(mid, hi)
+		// list.merge(lo, hi)
+	}
+}
+
+// Merge sort helper method
+// func (list *List[T]) merge(lo, hi int) {
+// 	mid := (hi + lo) / 2
+// 	l1 := Iterator
+// 	e1, _ := list.sublist(mid)
+// 	s2, _ := list.sublist(mid)
+// 	e2, _ := list.sublist(hi)
+// 	for s1 != e1 && s2 != e2 {
+// 		if s1.val < s2.val {
+// 			new.next = s1
+// 			new = *new.next
+// 		}
+// 	}
+// }
+
 // Binary search for v (inefficient in linked list)
 // List must be sorted
 // Return index, (-insertion point-1) if not found
@@ -235,37 +266,7 @@ func (list *List[T]) sublist(index int) (*List[T], error) {
 // 	return -(lo + 1)
 // }
 
-// Merge sort the list
-func (list *List[T]) sort() {
-	list.msort(0, list.length())
-}
-
-// Merge sort with indices
-func (list *List[T]) msort(lo, hi int) {
-	if hi > lo {
-		mid := (hi + lo) / 2
-		list.msort(lo, mid)
-		list.msort(mid, hi)
-		// list.merge(lo, hi)
-	}
-}
-
-// Merge sort helper method
-// func (list *List[T]) merge(lo, hi int) {
-// 	mid := (hi + lo) / 2
-// 	s1, _ := list.sublist(lo)
-// 	e1, _ := list.sublist(mid)
-// 	s2, _ := list.sublist(mid)
-// 	e2, _ := list.sublist(hi)
-// 	for s1 != e1 && s2 != e2 {
-// 		if s1.val < s2.val {
-// 			new.next = s1
-// 			new = *new.next
-// 		}
-// 	}
-// }
-
-// search, sort, get node, import package from github
+// search, sort, import package from github
 func main() {
 	// Initialize with dummy node
 	fmt.Println(red + "Initializing..." + reset)
