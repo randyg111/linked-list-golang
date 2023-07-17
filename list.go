@@ -39,17 +39,16 @@ func (iter *Iterator[T]) hasNext() bool {
 }
 
 // Return next element of iterator
-func (iter *Iterator[T]) next() (T, error) {
+func (iter *Iterator[T]) next() (*List[T], error) {
 	if !iter.hasNext() {
-		var fail T
-		return fail, &InvalidError{"next", "no next element"}
+		return nil, &InvalidError{"next", "no next element"}
 	}
 	// Do not increment if return value not set
 	if iter.ret != nil {
 		iter.list = iter.list.next
 	}
 	iter.ret = iter.list.next
-	return iter.list.next.val, nil
+	return iter.list.next, nil
 }
 
 // Remove element last returned by iterator
@@ -216,33 +215,94 @@ func (list *List[T]) sublist(index int) (*List[T], error) {
 	return list, nil
 }
 
-// Merge sort the list
-func (list *List[T]) sort() {
-	list.msort(0, list.length())
-}
-
-// Merge sort with recursion
-func (list *List[T]) msort(lo, hi int) {
-	if hi > lo {
-		mid := (hi + lo) / 2
-		list.msort(lo, mid)
-		list.msort(mid, hi)
-		// list.merge(lo, hi)
+// Insert list at index
+func (list *List[T]) insertList(index int, other *List[T]) error {
+	if index < 0 || index > list.length() {
+		return &IndexError{index}
 	}
+	for i := 0; i < index; i++ {
+		list = list.next
+	}
+	other = other.next
+	if list.next == nil {
+		list.next = other
+	} else {
+		next := list.next
+		list.next = other
+		for other.next != nil {
+			other = other.next
+		}
+		other.next = next
+	}
+	return nil
 }
 
-// Merge sort helper method
+// Merge sort the list
+// func (list *List[T]) sort() {
+// 	list.msort(0, list.length())
+// }
+
+// // Merge sort with recursion
+// func (list *List[T]) msort(lo, hi int) {
+// 	if hi > lo {
+// 		mid := (hi + lo) / 2
+// 		list.msort(lo, mid)
+// 		list.msort(mid+1, hi)
+// 		list.merge(lo, hi)
+// 	}
+// }
+
+// // Merge sort helper method
 // func (list *List[T]) merge(lo, hi int) {
+// 	fmt.Println(list)
+// 	fmt.Println(lo, hi)
 // 	mid := (hi + lo) / 2
-// 	l1 := Iterator
-// 	e1, _ := list.sublist(mid)
-// 	s2, _ := list.sublist(mid)
-// 	e2, _ := list.sublist(hi)
-// 	for s1 != e1 && s2 != e2 {
-// 		if s1.val < s2.val {
-// 			new.next = s1
-// 			new = *new.next
+
+// 	// Start
+// 	s1, _ := list.sublist(lo)
+// 	s2, _ := list.sublist(mid + 1)
+// 	fmt.Println(s1, s2)
+
+// 	// End
+// 	// Real end is one after index
+// 	e1, _ := list.sublist(mid + 1)
+// 	e2, _ := list.sublist(hi + 1)
+// 	fmt.Println(e1, e2)
+
+// 	// Iterators
+// 	i1 := Iterator[T]{s1, nil}
+// 	i2 := Iterator[T]{s2, nil}
+
+// 	// Values
+// 	v1, _ := i1.next()
+// 	v2, _ := i2.next()
+
+// 	for v1 != e1 && v2 != e2 {
+// 		if v1.val < v2.val {
+// 			s1.insert(0, v1.val)
+// 			s1 = s1.next
+// 			i1.remove()
+// 			v1, _ = i1.next()
+// 		} else {
+// 			s1.insert(0, v2.val)
+// 			s1 = s1.next
+// 			i2.remove()
+// 			v2, _ = i2.next()
 // 		}
+// 	}
+// 	fmt.Println(list)
+
+// 	for v1 != e1 {
+// 		s1.insert(0, v1.val)
+// 		s1 = s1.next
+// 		i1.remove()
+// 		v1, _ = i1.next()
+// 	}
+// 	for v2 != e2 {
+// 		s1.insert(0, v2.val)
+// 		s1 = s1.next
+// 		i2.remove()
+// 		v2, _ = i2.next()
 // 	}
 // }
 
@@ -266,7 +326,7 @@ func (list *List[T]) msort(lo, hi int) {
 // 	return -(lo + 1)
 // }
 
-// search, sort, import package from github
+// search, sort, import package from github, helper package
 func main() {
 	// Initialize with dummy node
 	fmt.Println(red + "Initializing..." + reset)
@@ -311,12 +371,13 @@ func main() {
 	// Test sublist
 	sublistTest(&list)
 
-	// // Test merge sort
-	// fmt.Println(list)
+	// Test insertList
+	insertListTest(&list)
 
-	// fmt.Println()
+	// Test merge sort
+	// sortTest(&list)
 
-	// // Test binary search
+	// Test binary search
 	// fmt.Println(list)
 	// fmt.Println("Search for 6")
 	// fmt.Println(list.search(1))
@@ -542,3 +603,30 @@ func sublistTest(list *List[int]) {
 	fmt.Println("Error: ", err)
 	fmt.Println()
 }
+
+func insertListTest(list *List[int]) {
+	fmt.Println(red + "Testing insertList..." + reset)
+	fmt.Println(list)
+	list2 := List[int]{}
+	list2.add(8, 9, 1)
+	fmt.Println("Insert", list2, "at index 3")
+	err := list.insertList(3, &list2)
+	fmt.Println(list)
+	fmt.Println("Error: ", err)
+	list3 := List[int]{}
+	list3.add(6)
+	fmt.Println("Insert", list3, "at index 8")
+	err = list.insertList(8, &list3)
+	fmt.Println(list)
+	fmt.Println("Error: ", err)
+	fmt.Println()
+}
+
+// func sortTest(list *List[int]) {
+// 	fmt.Println(red + "Testing merge sort..." + reset)
+// 	fmt.Println(list)
+// 	fmt.Println("Sort list")
+// 	list.sort()
+// 	fmt.Println(list)
+// 	fmt.Println()
+// }
