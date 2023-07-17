@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
-
-	"golang.org/x/exp/constraints"
+	// "golang.org/x/exp/constraints"
 )
 
 // List represents a singly-linked list that holds
 // values of ordered type (string, int, float),
 // Implements Stringer interface
-type List[T constraints.Ordered] struct {
+type List[T comparable] struct {
 	next *List[T]
 	val  T
 }
@@ -27,24 +26,28 @@ type InvalidError struct {
 }
 
 // Iterator for efficient traversal of linked list
-type Iterator[T constraints.Ordered] struct {
+type Iterator[T comparable] struct {
 	list *List[T]
 	ret  *List[T]
 }
 
 // Return whether iterator has next element
 func (iter *Iterator[T]) hasNext() bool {
-	return iter.list.next != nil
+	return iter.list.next.next != nil
 }
 
 // Return next element of iterator
-func (iter *Iterator[T]) next() T {
+func (iter *Iterator[T]) next() (T, error) {
+	if !iter.hasNext() {
+		var fail T
+		return fail, &InvalidError{"next"}
+	}
 	// Do not increment if return value not set
 	if iter.ret != nil {
 		iter.list = iter.list.next
 	}
 	iter.ret = iter.list.next
-	return iter.list.next.val
+	return iter.list.next.val, nil
 }
 
 // Remove value last returned by iterator
@@ -226,23 +229,23 @@ func (list *List[_]) length() int {
 
 // Binary search for v (inefficient in linked list)
 // List must be sorted
-// Return index, -1 if not found
-func (list *List[T]) search(v T) int {
-	hi := list.length()
-	lo := 0
-	for hi >= lo {
-		mid := (hi + lo) / 2
-		m, _ := list.get(mid)
-		if v > m {
-			lo = mid + 1
-		} else if v < m {
-			hi = mid - 1
-		} else {
-			return mid
-		}
-	}
-	return -(lo + 1)
-}
+// Return index, (-insertion point-1) if not found
+// func (list *List[T]) search(v T) int {
+// 	hi := list.length()
+// 	lo := 0
+// 	for hi >= lo {
+// 		mid := (hi + lo) / 2
+// 		m, _ := list.get(mid)
+// 		if v > m {
+// 			lo = mid + 1
+// 		} else if v < m {
+// 			hi = mid - 1
+// 		} else {
+// 			return mid
+// 		}
+// 	}
+// 	return -(lo + 1)
+// }
 
 // Merge sort the list
 func (list *List[T]) sort() {
@@ -275,6 +278,7 @@ func (list *List[T]) msort(lo, hi int) {
 // 	}
 // }
 
+// error panic, search, sort, iterator, splice
 func main() {
 	// Initialize with dummy node
 	fmt.Println("Initializing...")
@@ -314,7 +318,7 @@ func main() {
 	genericTest()
 
 	// Test iterator
-	// iter := Iterator{*list, nil}
+	iteratorTest(&list)
 
 	// // Test merge sort
 	// fmt.Println(list)
@@ -336,6 +340,18 @@ func main() {
 	// fmt.Println(strings.search("big"))
 	// fmt.Println()
 }
+
+// Colors
+var reset = "\033[0m"
+var red = "\033[31m"
+var green = "\033[32m"
+var yellow = "\033[33m"
+var blue = "\033[34m"
+var purple = "\033[35m"
+var cyan = "\033[36m"
+var gray = "\033[37m"
+var white = "\033[97m"
+
 func appendTest(list *List[int]) {
 	fmt.Println("Testing append...")
 	fmt.Println("Add 1 and 2")
@@ -471,5 +487,31 @@ func genericTest() {
 	fmt.Println("Error: ", err)
 	strings.remove(1)
 	fmt.Println(strings)
+	fmt.Println()
+}
+
+func iteratorTest(list *List[int]) {
+	fmt.Println("\033[31m" + "Testing iterator..." + "\033[0m")
+	fmt.Println(list)
+	iter := Iterator[int]{list: list, ret: nil}
+	val, err := iter.next()
+	fmt.Println(val)
+	fmt.Println("Error: ", err)
+	err = iter.remove()
+	fmt.Println("Remove the last returned element")
+	fmt.Println("Error: ", err)
+	fmt.Println(list)
+	err = iter.remove()
+	fmt.Println("Remove the last returned element")
+	fmt.Println("Error: ", err)
+	fmt.Println(list)
+	for iter.hasNext() {
+		val, err := iter.next()
+		fmt.Println(val)
+		fmt.Println("Error: ", err)
+	}
+	val, err = iter.next()
+	fmt.Println(val)
+	fmt.Println("Error: ", err)
 	fmt.Println()
 }
