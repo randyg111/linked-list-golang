@@ -22,7 +22,8 @@ type IndexError struct {
 // Invalid operation error,
 // Implements error interface
 type InvalidError struct {
-	op string
+	op     string
+	reason string
 }
 
 // Iterator for efficient traversal of linked list
@@ -40,7 +41,7 @@ func (iter *Iterator[T]) hasNext() bool {
 func (iter *Iterator[T]) next() (T, error) {
 	if !iter.hasNext() {
 		var fail T
-		return fail, &InvalidError{"next"}
+		return fail, &InvalidError{"next", "no next element"}
 	}
 	// Do not increment if return value not set
 	if iter.ret != nil {
@@ -50,10 +51,10 @@ func (iter *Iterator[T]) next() (T, error) {
 	return iter.list.next.val, nil
 }
 
-// Remove value last returned by iterator
+// Remove element last returned by iterator
 func (iter *Iterator[T]) remove() error {
 	if iter.ret == nil {
-		return &InvalidError{"remove"}
+		return &InvalidError{"remove", "no element to remove"}
 	}
 	iter.list.next = iter.ret.next
 	iter.ret = nil
@@ -67,7 +68,7 @@ func (e *IndexError) Error() string {
 
 // Return error message
 func (e *InvalidError) Error() string {
-	return fmt.Sprintf("Invalid operation: %v", e.op)
+	return fmt.Sprintf("Invalid operation: %v\nReason: %v", e.op, e.reason)
 }
 
 // Convert list to a string
@@ -200,32 +201,19 @@ func (list *List[_]) length() int {
 	return len
 }
 
-// Splice list to get new list from lo to hi
-// func (list *List[T]) splice(lo, hi int) (List[T], error) {
-// 	len := list.length()
-// 	if lo < 0 || lo > len {
-// 		var fail List[T]
-// 		return fail, &IndexError{lo}
-// 	}
-// 	if hi < 0 || hi > len {
-// 		var fail List[T]
-// 		return fail, &IndexError{lo}
-// 	}
-// 	if lo > hi {
-// 		var fail List[T]
-// 		return fail, &InvalidError{fmt.Sprintf("splice with indices %v and %v", lo, hi)}
-// 	}
-// 	var new List[T]
-
-// 	for i := lo; i <= hi; i++ {
-// 		if list.next == nil {
-// 			var fail T
-// 			return fail, &IndexError{index}
-// 		}
-// 		list = list.next
-// 	}
-// 	return list.val, nil
-// }
+// Return sublist starting at index
+func (list *List[T]) sublist(index int) (*List[T], error) {
+	len := list.length()
+	if index < 0 || index >= len {
+		return nil, &IndexError{index}
+	}
+	// List starts 1 before index
+	index--
+	for i := 0; i <= index; i++ {
+		list = list.next
+	}
+	return list, nil
+}
 
 // Binary search for v (inefficient in linked list)
 // List must be sorted
@@ -265,11 +253,10 @@ func (list *List[T]) msort(lo, hi int) {
 // Merge sort helper method
 // func (list *List[T]) merge(lo, hi int) {
 // 	mid := (hi + lo) / 2
-// 	var new List[T]
-// 	s1, _ := list.getNode(lo)
-// 	e1, _ := list.getNode(mid)
-// 	s2, _ := list.getNode(mid)
-// 	e2, _ := list.getNode(hi)
+// 	s1, _ := list.sublist(lo)
+// 	e1, _ := list.sublist(mid)
+// 	s2, _ := list.sublist(mid)
+// 	e2, _ := list.sublist(hi)
 // 	for s1 != e1 && s2 != e2 {
 // 		if s1.val < s2.val {
 // 			new.next = s1
@@ -278,7 +265,7 @@ func (list *List[T]) msort(lo, hi int) {
 // 	}
 // }
 
-// search, sort, splice, import package from github
+// search, sort, get node, import package from github
 func main() {
 	// Initialize with dummy node
 	fmt.Println(red + "Initializing..." + reset)
@@ -320,6 +307,9 @@ func main() {
 	// Test iterator
 	iteratorTest(&list)
 
+	// Test sublist
+	sublistTest(&list)
+
 	// // Test merge sort
 	// fmt.Println(list)
 
@@ -342,18 +332,21 @@ func main() {
 }
 
 // Colors
-var reset = "\033[0m"
-var red = "\033[31m"
-var green = "\033[32m"
-var yellow = "\033[33m"
-var blue = "\033[34m"
-var purple = "\033[35m"
-var cyan = "\033[36m"
-var gray = "\033[37m"
-var white = "\033[97m"
+var (
+	reset  = "\033[0m"
+	red    = "\033[31m"
+	green  = "\033[32m"
+	yellow = "\033[33m"
+	blue   = "\033[34m"
+	purple = "\033[35m"
+	cyan   = "\033[36m"
+	gray   = "\033[37m"
+	white  = "\033[97m"
+)
 
 func appendTest(list *List[int]) {
 	fmt.Println(red + "Testing append..." + reset)
+	fmt.Println(list)
 	fmt.Println("Add 1 and 2")
 	list.add(1)
 	list.add(2)
@@ -363,6 +356,7 @@ func appendTest(list *List[int]) {
 
 func deleteTest(list *List[int]) {
 	fmt.Println(red + "Testing delete..." + reset)
+	fmt.Println(list)
 	fmt.Println("Delete 1")
 	found := list.delete(1)
 	fmt.Println("Found:", found)
@@ -372,6 +366,7 @@ func deleteTest(list *List[int]) {
 
 func setTest(list *List[int]) {
 	fmt.Println(red + "Testing set..." + reset)
+	fmt.Println(list)
 	fmt.Println("Set index 0 to 1")
 	elem, err := list.set(0, 1)
 	fmt.Println("Removed element:", elem)
@@ -388,6 +383,7 @@ func setTest(list *List[int]) {
 
 func insertTest(list *List[int]) {
 	fmt.Println(red + "Testing insert..." + reset)
+	fmt.Println(list)
 	fmt.Println("Insert 2 at index 0")
 	err := list.insert(0, 2)
 	fmt.Println("Error:", err)
@@ -407,6 +403,7 @@ func insertTest(list *List[int]) {
 
 func indexOfTest(list *List[int]) {
 	fmt.Println(red + "Testing indexOf..." + reset)
+	fmt.Println(list)
 	fmt.Println("Index of 1")
 	index := list.indexOf(1)
 	fmt.Println("Index:", index)
@@ -421,6 +418,7 @@ func indexOfTest(list *List[int]) {
 
 func getTest(list *List[int]) {
 	fmt.Println(red + "Testing get..." + reset)
+	fmt.Println(list)
 	fmt.Println("Get index 0")
 	val, err := list.get(0)
 	fmt.Println("Value:", val)
@@ -437,6 +435,7 @@ func getTest(list *List[int]) {
 
 func variableTest(list *List[int]) {
 	fmt.Println(red + "Testing variable number of arguments..." + reset)
+	fmt.Println(list)
 	fmt.Println("Add 4 and 5")
 	list.add(4, 5)
 	fmt.Println(list)
@@ -449,6 +448,7 @@ func variableTest(list *List[int]) {
 
 func removeTest(list *List[int]) {
 	fmt.Println(red + "Testing remove..." + reset)
+	fmt.Println(list)
 	fmt.Println("Remove index 3")
 	elem, err := list.remove(3)
 	fmt.Println(list)
@@ -465,6 +465,7 @@ func removeTest(list *List[int]) {
 
 func lengthTest(list *List[int]) {
 	fmt.Println(red + "Testing length..." + reset)
+	fmt.Println(list)
 	len := list.length()
 	fmt.Println("Length of list: ", len)
 	fmt.Println()
@@ -507,6 +508,7 @@ func iteratorTest(list *List[int]) {
 	fmt.Println("Remove the last returned element")
 	fmt.Println("Error: ", err)
 	fmt.Println(list)
+	fmt.Println("Iterate through the list")
 	for iter.hasNext() {
 		val, err := iter.next()
 		fmt.Println(val)
@@ -514,6 +516,28 @@ func iteratorTest(list *List[int]) {
 	}
 	val, err = iter.next()
 	fmt.Println(val)
+	fmt.Println("Error: ", err)
+	fmt.Println()
+}
+
+func sublistTest(list *List[int]) {
+	fmt.Println(red + "Testing sublist..." + reset)
+	fmt.Println(list)
+	fmt.Println("Sublist starting from 0")
+	li, err := list.sublist(0)
+	fmt.Println(li)
+	fmt.Println("Error: ", err)
+	fmt.Println("Sublist starting from 1")
+	li, err = list.sublist(1)
+	fmt.Println(li)
+	fmt.Println("Error: ", err)
+	fmt.Println("Sublist starting from 4")
+	li, err = list.sublist(4)
+	fmt.Println(li)
+	fmt.Println("Error: ", err)
+	fmt.Println("Sublist starting from 5")
+	li, err = list.sublist(5)
+	fmt.Println(li)
 	fmt.Println("Error: ", err)
 	fmt.Println()
 }
