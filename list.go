@@ -223,7 +223,7 @@ func (list *List[_]) clear() {
 // Return sublist starting at index
 func (list *List[T]) sublist(index int) (*List[T], error) {
 	len := list.length()
-	if index < 0 || index >= len {
+	if index < 0 || index > len {
 		return nil, &IndexError{index}
 	}
 	// List starts 1 before index
@@ -346,7 +346,7 @@ func (list *List[T]) shuffle() {
 	}
 }
 
-// search, sort, import package from github, helper package
+// import package from github, helper package, bogo
 func main() {
 	// Initialize with dummy node
 	fmt.Println(red + "Initializing..." + reset)
@@ -395,7 +395,7 @@ func main() {
 	shuffleTest(&list)
 
 	// Test merge sort
-	// sortTest(&list)
+	sortTest(&list)
 
 	// Test binary search
 	searchTest(&list)
@@ -670,6 +670,7 @@ func genericTest() {
 	fmt.Println(red + "Remove" + reset)
 	strings.remove(1)
 	fmt.Println(strings)
+	strings.clear()
 	fmt.Println(red + "Shuffle" + reset)
 	for c := 'A'; c <= 'Z'; c++ {
 		strings.add(string(c))
@@ -680,11 +681,12 @@ func genericTest() {
 	strings.shuffle()
 	fmt.Println(strings)
 	fmt.Println(red + "Sort" + reset)
-	// strings.sort()
-	fmt.Println(strings)
-	fmt.Println()
-	strings.clear()
-	strings.add("Eandy", "Kandy", "Dandy", "Oandy", "Handy", "beautiful", "Gandy", "Landy", "Xandy", "Pandy", "Yandy", "Sandy", "hello", "Vandy", "Andy", "Nandy", "Candy", "world", "Iandy", "Mandy", "Wandy", "Randy", "Bandy", "Fandy", "Jandy", "Zandy", "Uandy", "Tandy", "Qandy")
 	strings.sort()
 	fmt.Println(strings)
+	fmt.Println(red + "Search" + reset)
+	fmt.Println(strings.search("A"))
+	fmt.Println(strings.search("a"))
+	fmt.Println(strings.search("z"))
+	fmt.Println(strings.search("0"))
+	fmt.Println()
 }
