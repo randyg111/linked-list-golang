@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
 
 	"golang.org/x/exp/constraints"
 )
@@ -213,6 +215,11 @@ func (list *List[_]) length() int {
 	return len
 }
 
+// Clear list
+func (list *List[_]) clear() {
+	list.next = nil
+}
+
 // Return sublist starting at index
 func (list *List[T]) sublist(index int) (*List[T], error) {
 	len := list.length()
@@ -250,12 +257,12 @@ func (list *List[T]) insertList(index int, other *List[T]) error {
 }
 
 // Merge sort the list
-func (list *List[T]) sort() {
+func (list *List[_]) sort() {
 	list.msort(0, list.length()-1)
 }
 
 // Merge sort with recursion
-func (list *List[T]) msort(lo, hi int) {
+func (list *List[_]) msort(lo, hi int) {
 	if hi > lo {
 		mid := (hi + lo) / 2
 		list.msort(lo, mid)
@@ -327,6 +334,18 @@ func (list *List[T]) search(v T) int {
 	return -(lo + 1)
 }
 
+// Fisher-Yates shuffle
+func (list *List[T]) shuffle() {
+	rand.Seed(time.Now().UnixNano())
+	len := list.length()
+	for i := 0; i < len-1; i++ {
+		randi := rand.Intn(len-i) + i
+		val, _ := list.get(i)
+		swap, _ := list.set(randi, val)
+		list.set(i, swap)
+	}
+}
+
 // search, sort, import package from github, helper package
 func main() {
 	// Initialize with dummy node
@@ -372,8 +391,11 @@ func main() {
 	// Test insertList
 	insertListTest(&list)
 
+	// Test shuffle
+	shuffleTest(&list)
+
 	// Test merge sort
-	sortTest(&list)
+	// sortTest(&list)
 
 	// Test binary search
 	searchTest(&list)
@@ -590,6 +612,15 @@ func insertListTest(list *List[int]) {
 	fmt.Println()
 }
 
+func shuffleTest(list *List[int]) {
+	fmt.Println(red + "Testing shuffle..." + reset)
+	fmt.Println(list)
+	fmt.Println("Shuffle list")
+	list.shuffle()
+	fmt.Println(list)
+	fmt.Println()
+}
+
 func sortTest(list *List[int]) {
 	fmt.Println(red + "Testing merge sort..." + reset)
 	fmt.Println(list)
@@ -600,6 +631,7 @@ func sortTest(list *List[int]) {
 }
 
 func searchTest(list *List[int]) {
+	fmt.Println(red + "Testing binary search..." + reset)
 	fmt.Println(list)
 	for i := 1; i <= 9; i++ {
 		fmt.Println("Search for", i)
@@ -614,21 +646,45 @@ func searchTest(list *List[int]) {
 
 func genericTest() {
 	fmt.Println(red + "Testing generic types..." + reset)
+	fmt.Println(red + "Initialize" + reset)
 	var strings List[string]
 	fmt.Println(strings)
+	fmt.Println(red + "Append" + reset)
 	strings.add("goodbye", "cruel", "world")
 	fmt.Println(strings)
+	fmt.Println(red + "Delete" + reset)
 	strings.delete("cruel")
 	fmt.Println(strings)
+	fmt.Println(red + "Set" + reset)
 	strings.set(0, "hello")
 	fmt.Println(strings)
+	fmt.Println(red + "Insert" + reset)
 	strings.insert(1, "big", "beautiful")
 	fmt.Println(strings)
+	fmt.Println(red + "IndexOf" + reset)
 	fmt.Println(strings.indexOf("world"))
+	fmt.Println(red + "Get" + reset)
 	str, err := strings.get(0)
 	fmt.Println(str)
 	fmt.Println("Error: ", err)
+	fmt.Println(red + "Remove" + reset)
 	strings.remove(1)
 	fmt.Println(strings)
+	fmt.Println(red + "Shuffle" + reset)
+	for c := 'A'; c <= 'Z'; c++ {
+		strings.add(string(c))
+	}
+	for c := 'a'; c <= 'z'; c++ {
+		strings.add(string(c))
+	}
+	strings.shuffle()
+	fmt.Println(strings)
+	fmt.Println(red + "Sort" + reset)
+	// strings.sort()
+	fmt.Println(strings)
 	fmt.Println()
+	strings.clear()
+	strings.add("Eandy", "Kandy", "Dandy", "Oandy", "Handy", "beautiful", "Gandy", "Landy", "Xandy", "Pandy", "Yandy", "Sandy", "hello", "Vandy", "Andy", "Nandy", "Candy", "world", "Iandy", "Mandy", "Wandy", "Randy", "Bandy", "Fandy", "Jandy", "Zandy", "Uandy", "Tandy", "Qandy")
+	strings.sort()
+	fmt.Println(strings)
 }
