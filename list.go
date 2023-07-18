@@ -310,22 +310,22 @@ func (list *List[T]) merge(lo, hi int) {
 // Binary search for v (inefficient in linked list)
 // List must be sorted
 // Return index, (-insertion point-1) if not found
-// func (list *List[T]) search(v T) int {
-// 	hi := list.length()
-// 	lo := 0
-// 	for hi >= lo {
-// 		mid := (hi + lo) / 2
-// 		m, _ := list.get(mid)
-// 		if v > m {
-// 			lo = mid + 1
-// 		} else if v < m {
-// 			hi = mid - 1
-// 		} else {
-// 			return mid
-// 		}
-// 	}
-// 	return -(lo + 1)
-// }
+func (list *List[T]) search(v T) int {
+	hi := list.length() - 1
+	lo := 0
+	for hi >= lo {
+		mid := (hi + lo) / 2
+		m, _ := list.get(mid)
+		if v > m {
+			lo = mid + 1
+		} else if v < m {
+			hi = mid - 1
+		} else {
+			return mid
+		}
+	}
+	return -(lo + 1)
+}
 
 // search, sort, import package from github, helper package
 func main() {
@@ -363,9 +363,6 @@ func main() {
 	// Test length
 	lengthTest(&list)
 
-	// Test all with generic type
-	genericTest()
-
 	// Test iterator
 	iteratorTest(&list)
 
@@ -379,19 +376,10 @@ func main() {
 	sortTest(&list)
 
 	// Test binary search
-	// fmt.Println(list)
-	// fmt.Println("Search for 6")
-	// fmt.Println(list.search(1))
-	// fmt.Println("Search for 1")
-	// fmt.Println(list.search(6))
-	// fmt.Println()
+	searchTest(&list)
 
-	// fmt.Println(strings)
-	// fmt.Println("Search for hello")
-	// fmt.Println(strings.search("hello"))
-	// fmt.Println("Search for big")
-	// fmt.Println(strings.search("big"))
-	// fmt.Println()
+	// Test all with generic type
+	genericTest()
 }
 
 // Colors
@@ -534,27 +522,6 @@ func lengthTest(list *List[int]) {
 	fmt.Println()
 }
 
-func genericTest() {
-	fmt.Println(red + "Testing generic types..." + reset)
-	var strings List[string]
-	fmt.Println(strings)
-	strings.add("goodbye", "cruel", "world")
-	fmt.Println(strings)
-	strings.delete("cruel")
-	fmt.Println(strings)
-	strings.set(0, "hello")
-	fmt.Println(strings)
-	strings.insert(1, "big", "beautiful")
-	fmt.Println(strings)
-	fmt.Println(strings.indexOf("world"))
-	str, err := strings.get(0)
-	fmt.Println(str)
-	fmt.Println("Error: ", err)
-	strings.remove(1)
-	fmt.Println(strings)
-	fmt.Println()
-}
-
 func iteratorTest(list *List[int]) {
 	fmt.Println(red + "Testing iterator..." + reset)
 	fmt.Println(list)
@@ -629,5 +596,39 @@ func sortTest(list *List[int]) {
 	fmt.Println("Sort list")
 	list.sort()
 	fmt.Println(list)
+	fmt.Println()
+}
+
+func searchTest(list *List[int]) {
+	fmt.Println(list)
+	for i := 1; i <= 9; i++ {
+		fmt.Println("Search for", i)
+		fmt.Println(list.search(i))
+	}
+	fmt.Println("Search for 0")
+	fmt.Println(list.search(0))
+	fmt.Println("Search for 10")
+	fmt.Println(list.search(10))
+	fmt.Println()
+}
+
+func genericTest() {
+	fmt.Println(red + "Testing generic types..." + reset)
+	var strings List[string]
+	fmt.Println(strings)
+	strings.add("goodbye", "cruel", "world")
+	fmt.Println(strings)
+	strings.delete("cruel")
+	fmt.Println(strings)
+	strings.set(0, "hello")
+	fmt.Println(strings)
+	strings.insert(1, "big", "beautiful")
+	fmt.Println(strings)
+	fmt.Println(strings.indexOf("world"))
+	str, err := strings.get(0)
+	fmt.Println(str)
+	fmt.Println("Error: ", err)
+	strings.remove(1)
+	fmt.Println(strings)
 	fmt.Println()
 }
