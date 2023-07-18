@@ -346,6 +346,25 @@ func (list *List[T]) shuffle() {
 	}
 }
 
+// Check if list sorted
+func (list *List[T]) sorted() bool {
+	list = list.next
+	for list != nil && list.next != nil {
+		if list.next.val < list.val {
+			return false
+		}
+		list = list.next
+	}
+	return true
+}
+
+// Bogo sort
+func (list *List[T]) bogo() {
+	for !list.sorted() {
+		list.shuffle()
+	}
+}
+
 // import package from github, helper package, bogo
 func main() {
 	// Initialize with dummy node
@@ -402,6 +421,9 @@ func main() {
 
 	// Test all with generic type
 	genericTest()
+
+	// Test bogo sort
+	bogoTest(&list)
 }
 
 // Colors
@@ -688,5 +710,15 @@ func genericTest() {
 	fmt.Println(strings.search("a"))
 	fmt.Println(strings.search("z"))
 	fmt.Println(strings.search("0"))
+	fmt.Println()
+}
+
+func bogoTest(list *List[int]) {
+	fmt.Println(red + "Testing bogo sort..." + reset)
+	list.shuffle()
+	fmt.Println(list)
+	fmt.Println("Bogo sort")
+	list.bogo()
+	fmt.Println(list)
 	fmt.Println()
 }
