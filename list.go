@@ -35,7 +35,7 @@ type Iterator[T constraints.Ordered] struct {
 
 // Return whether iterator has next element
 func (iter *Iterator[T]) hasNext() bool {
-	return iter.list.next.next != nil
+	return iter.list != nil && iter.list.next != nil && (iter.ret == nil || iter.list.next.next != nil)
 }
 
 // Return next element of iterator
@@ -43,12 +43,12 @@ func (iter *Iterator[T]) next() (*List[T], error) {
 	if !iter.hasNext() {
 		return nil, &InvalidError{"next", "no next element"}
 	}
-	// Do not increment if return value not set
+	// Increment only if return value is set
 	if iter.ret != nil {
 		iter.list = iter.list.next
 	}
 	iter.ret = iter.list.next
-	return iter.list.next, nil
+	return iter.ret, nil
 }
 
 // Remove element last returned by iterator
@@ -59,6 +59,18 @@ func (iter *Iterator[T]) remove() error {
 	iter.list.next = iter.ret.next
 	iter.ret = nil
 	return nil
+}
+
+// Add element with iterator
+func (iter *Iterator[T]) add(v T) {
+	if iter.list.next == nil {
+		iter.list.next = &List[T]{nil, v}
+		iter.list = iter.list.next
+	} else {
+		iter.list.next.next = &List[T]{iter.list.next.next, v}
+		iter.list = iter.list.next.next
+		iter.ret = nil
+	}
 }
 
 // Return error message
@@ -226,7 +238,7 @@ func (list *List[T]) insertList(index int, other *List[T]) error {
 	other = other.next
 	if list.next == nil {
 		list.next = other
-	} else {
+	} else if other != nil {
 		next := list.next
 		list.next = other
 		for other.next != nil {
@@ -238,73 +250,62 @@ func (list *List[T]) insertList(index int, other *List[T]) error {
 }
 
 // Merge sort the list
-// func (list *List[T]) sort() {
-// 	list.msort(0, list.length())
-// }
+func (list *List[T]) sort() {
+	list.msort(0, list.length()-1)
+}
 
-// // Merge sort with recursion
-// func (list *List[T]) msort(lo, hi int) {
-// 	if hi > lo {
-// 		mid := (hi + lo) / 2
-// 		list.msort(lo, mid)
-// 		list.msort(mid+1, hi)
-// 		list.merge(lo, hi)
-// 	}
-// }
+// Merge sort with recursion
+func (list *List[T]) msort(lo, hi int) {
+	if hi > lo {
+		mid := (hi + lo) / 2
+		list.msort(lo, mid)
+		list.msort(mid+1, hi)
+		list.merge(lo, hi)
+	}
+}
 
-// // Merge sort helper method
-// func (list *List[T]) merge(lo, hi int) {
-// 	fmt.Println(list)
-// 	fmt.Println(lo, hi)
-// 	mid := (hi + lo) / 2
+// Merge sort helper method
+func (list *List[T]) merge(lo, hi int) {
+	mid := (hi + lo) / 2
 
-// 	// Start
-// 	s1, _ := list.sublist(lo)
-// 	s2, _ := list.sublist(mid + 1)
-// 	fmt.Println(s1, s2)
+	// Start
+	s1, _ := list.sublist(lo)
+	s2, _ := list.sublist(mid + 1)
 
-// 	// End
-// 	// Real end is one after index
-// 	e1, _ := list.sublist(mid + 1)
-// 	e2, _ := list.sublist(hi + 1)
-// 	fmt.Println(e1, e2)
+	// End
+	e, _ := list.sublist(hi + 2)
 
-// 	// Iterators
-// 	i1 := Iterator[T]{s1, nil}
-// 	i2 := Iterator[T]{s2, nil}
+	// Iterators
+	i1 := Iterator[T]{s1, nil}
+	i2 := Iterator[T]{s2, nil}
 
-// 	// Values
-// 	v1, _ := i1.next()
-// 	v2, _ := i2.next()
+	// Values
+	v1, _ := i1.next()
+	v2, _ := i2.next()
 
-// 	for v1 != e1 && v2 != e2 {
-// 		if v1.val < v2.val {
-// 			s1.insert(0, v1.val)
-// 			s1 = s1.next
-// 			i1.remove()
-// 			v1, _ = i1.next()
-// 		} else {
-// 			s1.insert(0, v2.val)
-// 			s1 = s1.next
-// 			i2.remove()
-// 			v2, _ = i2.next()
-// 		}
-// 	}
-// 	fmt.Println(list)
+	// Temporary list
+	temp := List[T]{}
+	iter := Iterator[T]{&temp, nil}
 
-// 	for v1 != e1 {
-// 		s1.insert(0, v1.val)
-// 		s1 = s1.next
-// 		i1.remove()
-// 		v1, _ = i1.next()
-// 	}
-// 	for v2 != e2 {
-// 		s1.insert(0, v2.val)
-// 		s1 = s1.next
-// 		i2.remove()
-// 		v2, _ = i2.next()
-// 	}
-// }
+	for v1 != v2 && v2 != e {
+		if v1.val < v2.val {
+			iter.add(v1.val)
+			i1.remove()
+			v1, _ = i1.next()
+		} else {
+			iter.add(v2.val)
+			i2.remove()
+			v2, _ = i2.next()
+		}
+	}
+
+	for v1 != e {
+		iter.add(v1.val)
+		i1.remove()
+		v1, _ = i1.next()
+	}
+	s1.insertList(0, &temp)
+}
 
 // Binary search for v (inefficient in linked list)
 // List must be sorted
@@ -375,7 +376,7 @@ func main() {
 	insertListTest(&list)
 
 	// Test merge sort
-	// sortTest(&list)
+	sortTest(&list)
 
 	// Test binary search
 	// fmt.Println(list)
@@ -560,7 +561,7 @@ func iteratorTest(list *List[int]) {
 	iter := Iterator[int]{list, nil}
 	fmt.Println("Get the next element")
 	val, err := iter.next()
-	fmt.Println(val)
+	fmt.Println(val.val)
 	fmt.Println("Error: ", err)
 	err = iter.remove()
 	fmt.Println("Remove the last returned element")
@@ -573,7 +574,7 @@ func iteratorTest(list *List[int]) {
 	fmt.Println("Iterate through the list")
 	for iter.hasNext() {
 		val, err := iter.next()
-		fmt.Println(val)
+		fmt.Println(val.val)
 		fmt.Println("Error: ", err)
 	}
 	val, err = iter.next()
@@ -622,11 +623,11 @@ func insertListTest(list *List[int]) {
 	fmt.Println()
 }
 
-// func sortTest(list *List[int]) {
-// 	fmt.Println(red + "Testing merge sort..." + reset)
-// 	fmt.Println(list)
-// 	fmt.Println("Sort list")
-// 	list.sort()
-// 	fmt.Println(list)
-// 	fmt.Println()
-// }
+func sortTest(list *List[int]) {
+	fmt.Println(red + "Testing merge sort..." + reset)
+	fmt.Println(list)
+	fmt.Println("Sort list")
+	list.sort()
+	fmt.Println(list)
+	fmt.Println()
+}
