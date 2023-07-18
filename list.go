@@ -365,7 +365,7 @@ func (list *List[T]) bogo() {
 	}
 }
 
-// import package from github, helper package, bogo
+// import package from github, helper package
 func main() {
 	// Initialize with dummy node
 	fmt.Println(red + "Initializing..." + reset)
