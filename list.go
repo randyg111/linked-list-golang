@@ -1,4 +1,4 @@
-package list
+package main
 
 import (
 	"fmt"
@@ -12,7 +12,7 @@ import (
 // values of ordered type (string, int, float),
 // Implements Stringer interface
 type List[T constraints.Ordered] struct {
-	Next *List[T]
+	next *List[T]
 	val  T
 }
 
@@ -35,21 +35,21 @@ type Iterator[T constraints.Ordered] struct {
 	ret  *List[T]
 }
 
-// Return whether iterator has Next element
+// Return whether iterator has next element
 func (iter *Iterator[T]) HasNext() bool {
-	return iter.list != nil && iter.list.Next != nil && (iter.ret == nil || iter.list.Next.Next != nil)
+	return iter.list != nil && iter.list.next != nil && (iter.ret == nil || iter.list.next.next != nil)
 }
 
-// Return Next element of iterator
+// Return next element of iterator
 func (iter *Iterator[T]) Next() (*List[T], error) {
 	if !iter.HasNext() {
-		return nil, &InvalidError{"Next", "no Next element"}
+		return nil, &InvalidError{"next", "no next element"}
 	}
 	// Increment only if return value is Set
 	if iter.ret != nil {
-		iter.list = iter.list.Next
+		iter.list = iter.list.next
 	}
-	iter.ret = iter.list.Next
+	iter.ret = iter.list.next
 	return iter.ret, nil
 }
 
@@ -58,19 +58,19 @@ func (iter *Iterator[T]) Remove() error {
 	if iter.ret == nil {
 		return &InvalidError{"Remove", "no element to Remove"}
 	}
-	iter.list.Next = iter.ret.Next
+	iter.list.next = iter.ret.next
 	iter.ret = nil
 	return nil
 }
 
 // Add element with iterator
 func (iter *Iterator[T]) Add(v T) {
-	if iter.list.Next == nil {
-		iter.list.Next = &List[T]{nil, v}
-		iter.list = iter.list.Next
+	if iter.list.next == nil {
+		iter.list.next = &List[T]{nil, v}
+		iter.list = iter.list.next
 	} else {
-		iter.list.Next.Next = &List[T]{iter.list.Next.Next, v}
-		iter.list = iter.list.Next.Next
+		iter.list.next.next = &List[T]{iter.list.next.next, v}
+		iter.list = iter.list.next.next
 		iter.ret = nil
 	}
 }
@@ -87,13 +87,13 @@ func (e *InvalidError) Error() string {
 
 // Convert list to a string
 func (list List[_]) String() string {
-	if list.Next == nil {
+	if list.next == nil {
 		return "[]"
 	}
-	list = *list.Next
+	list = *list.next
 	s := fmt.Sprintf("[%v", list.val)
-	for list.Next != nil {
-		list = *list.Next
+	for list.next != nil {
+		list = *list.next
 		s += fmt.Sprintf(", %v", list.val)
 	}
 	s += "]"
@@ -102,22 +102,22 @@ func (list List[_]) String() string {
 
 // Append values to the list
 func (list *List[T]) Add(vs ...T) {
-	for list.Next != nil {
-		list = list.Next
+	for list.next != nil {
+		list = list.next
 	}
 	for _, v := range vs {
-		list.Next = &List[T]{nil, v}
-		list = list.Next
+		list.next = &List[T]{nil, v}
+		list = list.next
 	}
 }
 
 // Delete the first occurence of v,
 // Return whether deletion succeeded
 func (list *List[T]) Delete(v T) bool {
-	for list != nil {
-		n := list.Next
+	for list.next != nil {
+		n := list.next
 		if n.val == v {
-			list.Next = n.Next
+			list.next = n.next
 			return true
 		}
 		list = n
@@ -133,7 +133,7 @@ func (list *List[T]) Set(index int, v T) (T, error) {
 		return fail, &IndexError{index}
 	}
 	for i := 0; i <= index; i++ {
-		list = list.Next
+		list = list.next
 	}
 	old := list.val
 	list.val = v
@@ -147,17 +147,17 @@ func (list *List[T]) Insert(index int, vs ...T) error {
 		return &IndexError{index}
 	}
 	for i := 0; i < index; i++ {
-		list = list.Next
+		list = list.next
 	}
-	if list.Next == nil {
+	if list.next == nil {
 		for _, v := range vs {
-			list.Next = &List[T]{nil, v}
-			list = list.Next
+			list.next = &List[T]{nil, v}
+			list = list.next
 		}
 	} else {
 		for _, v := range vs {
-			list.Next = &List[T]{list.Next, v}
-			list = list.Next
+			list.next = &List[T]{list.next, v}
+			list = list.next
 		}
 	}
 	return nil
@@ -165,13 +165,13 @@ func (list *List[T]) Insert(index int, vs ...T) error {
 
 // Return index of v, -1 if not found
 func (list *List[T]) IndexOf(v T) int {
-	list = list.Next
+	list = list.next
 	i := 0
 	for list != nil {
 		if list.val == v {
 			return i
 		}
-		list = list.Next
+		list = list.next
 		i++
 	}
 	return -1
@@ -185,7 +185,7 @@ func (list *List[T]) Get(index int) (T, error) {
 		return fail, &IndexError{index}
 	}
 	for i := 0; i <= index; i++ {
-		list = list.Next
+		list = list.next
 	}
 	return list.val, nil
 }
@@ -198,18 +198,30 @@ func (list *List[T]) Remove(index int) (T, error) {
 		return fail, &IndexError{index}
 	}
 	for i := 0; i < index; i++ {
-		list = list.Next
+		list = list.next
 	}
-	old := list.Next.val
-	list.Next = list.Next.Next
+	old := list.next.val
+	list.next = list.next.next
 	return old, nil
 }
 
-// Return Length of list
+// Copy list to a new list
+func (list *List[T]) Copy() List[T] {
+	copy := List[T]{nil, list.val}
+	next := &copy
+	for list.next != nil {
+		next.next = &List[T]{nil, list.next.val}
+		next = next.next
+		list = list.next
+	}
+	return copy
+}
+
+// Return length of list
 func (list *List[_]) Length() int {
 	len := 0
-	for list.Next != nil {
-		list = list.Next
+	for list.next != nil {
+		list = list.next
 		len++
 	}
 	return len
@@ -217,7 +229,7 @@ func (list *List[_]) Length() int {
 
 // Clear list
 func (list *List[_]) Clear() {
-	list.Next = nil
+	list.next = nil
 }
 
 // Return sublist starting at index
@@ -229,7 +241,7 @@ func (list *List[T]) Sublist(index int) (*List[T], error) {
 	// List starts 1 before index
 	index--
 	for i := 0; i <= index; i++ {
-		list = list.Next
+		list = list.next
 	}
 	return list, nil
 }
@@ -240,18 +252,18 @@ func (list *List[T]) InsertList(index int, other *List[T]) error {
 		return &IndexError{index}
 	}
 	for i := 0; i < index; i++ {
-		list = list.Next
+		list = list.next
 	}
-	other = other.Next
-	if list.Next == nil {
-		list.Next = other
+	other = other.next
+	if list.next == nil {
+		list.next = other
 	} else if other != nil {
-		Next := list.Next
-		list.Next = other
-		for other.Next != nil {
-			other = other.Next
+		next := list.next
+		list.next = other
+		for other.next != nil {
+			other = other.next
 		}
-		other.Next = Next
+		other.next = next
 	}
 	return nil
 }
@@ -356,12 +368,12 @@ func (list *List[T]) Shuffle() {
 
 // Check if list sorted
 func (list *List[T]) Sorted() bool {
-	list = list.Next
-	for list != nil && list.Next != nil {
-		if list.Next.val < list.val {
+	list = list.next
+	for list != nil && list.next != nil {
+		if list.next.val < list.val {
 			return false
 		}
-		list = list.Next
+		list = list.next
 	}
 	return true
 }

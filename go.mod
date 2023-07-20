@@ -1,4 +1,4 @@
-module main
+module github.com/randyg111/linked-list-golang
 
 go 1.20
 
