@@ -12,7 +12,7 @@ import (
 // values of ordered type (string, int, float),
 // Implements Stringer interface
 type List[T constraints.Ordered] struct {
-	next *List[T]
+	Next *List[T]
 	val  T
 }
 
@@ -35,42 +35,42 @@ type Iterator[T constraints.Ordered] struct {
 	ret  *List[T]
 }
 
-// Return whether iterator has next element
-func (iter *Iterator[T]) hasNext() bool {
-	return iter.list != nil && iter.list.next != nil && (iter.ret == nil || iter.list.next.next != nil)
+// Return whether iterator has Next element
+func (iter *Iterator[T]) HasNext() bool {
+	return iter.list != nil && iter.list.Next != nil && (iter.ret == nil || iter.list.Next.Next != nil)
 }
 
-// Return next element of iterator
-func (iter *Iterator[T]) next() (*List[T], error) {
-	if !iter.hasNext() {
-		return nil, &InvalidError{"next", "no next element"}
+// Return Next element of iterator
+func (iter *Iterator[T]) Next() (*List[T], error) {
+	if !iter.HasNext() {
+		return nil, &InvalidError{"Next", "no Next element"}
 	}
-	// Increment only if return value is set
+	// Increment only if return value is Set
 	if iter.ret != nil {
-		iter.list = iter.list.next
+		iter.list = iter.list.Next
 	}
-	iter.ret = iter.list.next
+	iter.ret = iter.list.Next
 	return iter.ret, nil
 }
 
 // Remove element last returned by iterator
-func (iter *Iterator[T]) remove() error {
+func (iter *Iterator[T]) Remove() error {
 	if iter.ret == nil {
-		return &InvalidError{"remove", "no element to remove"}
+		return &InvalidError{"Remove", "no element to Remove"}
 	}
-	iter.list.next = iter.ret.next
+	iter.list.Next = iter.ret.Next
 	iter.ret = nil
 	return nil
 }
 
 // Add element with iterator
-func (iter *Iterator[T]) add(v T) {
-	if iter.list.next == nil {
-		iter.list.next = &List[T]{nil, v}
-		iter.list = iter.list.next
+func (iter *Iterator[T]) Add(v T) {
+	if iter.list.Next == nil {
+		iter.list.Next = &List[T]{nil, v}
+		iter.list = iter.list.Next
 	} else {
-		iter.list.next.next = &List[T]{iter.list.next.next, v}
-		iter.list = iter.list.next.next
+		iter.list.Next.Next = &List[T]{iter.list.Next.Next, v}
+		iter.list = iter.list.Next.Next
 		iter.ret = nil
 	}
 }
@@ -87,13 +87,13 @@ func (e *InvalidError) Error() string {
 
 // Convert list to a string
 func (list List[_]) String() string {
-	if list.next == nil {
+	if list.Next == nil {
 		return "[]"
 	}
-	list = *list.next
+	list = *list.Next
 	s := fmt.Sprintf("[%v", list.val)
-	for list.next != nil {
-		list = *list.next
+	for list.Next != nil {
+		list = *list.Next
 		s += fmt.Sprintf(", %v", list.val)
 	}
 	s += "]"
@@ -101,23 +101,23 @@ func (list List[_]) String() string {
 }
 
 // Append values to the list
-func (list *List[T]) add(vs ...T) {
-	for list.next != nil {
-		list = list.next
+func (list *List[T]) Add(vs ...T) {
+	for list.Next != nil {
+		list = list.Next
 	}
 	for _, v := range vs {
-		list.next = &List[T]{nil, v}
-		list = list.next
+		list.Next = &List[T]{nil, v}
+		list = list.Next
 	}
 }
 
 // Delete the first occurence of v,
 // Return whether deletion succeeded
-func (list *List[T]) delete(v T) bool {
+func (list *List[T]) Delete(v T) bool {
 	for list != nil {
-		n := list.next
+		n := list.Next
 		if n.val == v {
-			list.next = n.next
+			list.Next = n.Next
 			return true
 		}
 		list = n
@@ -127,13 +127,13 @@ func (list *List[T]) delete(v T) bool {
 
 // Set index to v,
 // Return error if index out of bounds
-func (list *List[T]) set(index int, v T) (T, error) {
-	if index < 0 || index >= list.length() {
+func (list *List[T]) Set(index int, v T) (T, error) {
+	if index < 0 || index >= list.Length() {
 		var fail T
 		return fail, &IndexError{index}
 	}
 	for i := 0; i <= index; i++ {
-		list = list.next
+		list = list.Next
 	}
 	old := list.val
 	list.val = v
@@ -142,36 +142,36 @@ func (list *List[T]) set(index int, v T) (T, error) {
 
 // Insert values at index,
 // Return error if index out of bounds
-func (list *List[T]) insert(index int, vs ...T) error {
-	if index < 0 || index > list.length() {
+func (list *List[T]) Insert(index int, vs ...T) error {
+	if index < 0 || index > list.Length() {
 		return &IndexError{index}
 	}
 	for i := 0; i < index; i++ {
-		list = list.next
+		list = list.Next
 	}
-	if list.next == nil {
+	if list.Next == nil {
 		for _, v := range vs {
-			list.next = &List[T]{nil, v}
-			list = list.next
+			list.Next = &List[T]{nil, v}
+			list = list.Next
 		}
 	} else {
 		for _, v := range vs {
-			list.next = &List[T]{list.next, v}
-			list = list.next
+			list.Next = &List[T]{list.Next, v}
+			list = list.Next
 		}
 	}
 	return nil
 }
 
 // Return index of v, -1 if not found
-func (list *List[T]) indexOf(v T) int {
-	list = list.next
+func (list *List[T]) IndexOf(v T) int {
+	list = list.Next
 	i := 0
 	for list != nil {
 		if list.val == v {
 			return i
 		}
-		list = list.next
+		list = list.Next
 		i++
 	}
 	return -1
@@ -179,86 +179,86 @@ func (list *List[T]) indexOf(v T) int {
 
 // Get value at index,
 // Return error if index out of bounds
-func (list *List[T]) get(index int) (T, error) {
-	if index < 0 || index >= list.length() {
+func (list *List[T]) Get(index int) (T, error) {
+	if index < 0 || index >= list.Length() {
 		var fail T
 		return fail, &IndexError{index}
 	}
 	for i := 0; i <= index; i++ {
-		list = list.next
+		list = list.Next
 	}
 	return list.val, nil
 }
 
 // Remove element at index,
 // Return error if index out of bounds
-func (list *List[T]) remove(index int) (T, error) {
-	if index < 0 || index >= list.length() {
+func (list *List[T]) Remove(index int) (T, error) {
+	if index < 0 || index >= list.Length() {
 		var fail T
 		return fail, &IndexError{index}
 	}
 	for i := 0; i < index; i++ {
-		list = list.next
+		list = list.Next
 	}
-	old := list.next.val
-	list.next = list.next.next
+	old := list.Next.val
+	list.Next = list.Next.Next
 	return old, nil
 }
 
-// Return length of list
-func (list *List[_]) length() int {
+// Return Length of list
+func (list *List[_]) Length() int {
 	len := 0
-	for list.next != nil {
-		list = list.next
+	for list.Next != nil {
+		list = list.Next
 		len++
 	}
 	return len
 }
 
 // Clear list
-func (list *List[_]) clear() {
-	list.next = nil
+func (list *List[_]) Clear() {
+	list.Next = nil
 }
 
 // Return sublist starting at index
-func (list *List[T]) sublist(index int) (*List[T], error) {
-	len := list.length()
+func (list *List[T]) Sublist(index int) (*List[T], error) {
+	len := list.Length()
 	if index < 0 || index > len {
 		return nil, &IndexError{index}
 	}
 	// List starts 1 before index
 	index--
 	for i := 0; i <= index; i++ {
-		list = list.next
+		list = list.Next
 	}
 	return list, nil
 }
 
 // Insert list at index
-func (list *List[T]) insertList(index int, other *List[T]) error {
-	if index < 0 || index > list.length() {
+func (list *List[T]) InsertList(index int, other *List[T]) error {
+	if index < 0 || index > list.Length() {
 		return &IndexError{index}
 	}
 	for i := 0; i < index; i++ {
-		list = list.next
+		list = list.Next
 	}
-	other = other.next
-	if list.next == nil {
-		list.next = other
+	other = other.Next
+	if list.Next == nil {
+		list.Next = other
 	} else if other != nil {
-		next := list.next
-		list.next = other
-		for other.next != nil {
-			other = other.next
+		Next := list.Next
+		list.Next = other
+		for other.Next != nil {
+			other = other.Next
 		}
-		other.next = next
+		other.Next = Next
 	}
 	return nil
 }
 
 // Merge sort the list
-func (list *List[_]) sort() {
-	list.msort(0, list.length()-1)
+func (list *List[_]) Sort() {
+	list.msort(0, list.Length()-1)
 }
 
 // Merge sort with recursion
@@ -276,19 +276,19 @@ func (list *List[T]) merge(lo, hi int) {
 	mid := (hi + lo) / 2
 
 	// Start
-	s1, _ := list.sublist(lo)
-	s2, _ := list.sublist(mid + 1)
+	s1, _ := list.Sublist(lo)
+	s2, _ := list.Sublist(mid + 1)
 
 	// End
-	e, _ := list.sublist(hi + 2)
+	e, _ := list.Sublist(hi + 2)
 
 	// Iterators
 	i1 := Iterator[T]{s1, nil}
 	i2 := Iterator[T]{s2, nil}
 
 	// Values
-	v1, _ := i1.next()
-	v2, _ := i2.next()
+	v1, _ := i1.Next()
+	v2, _ := i2.Next()
 
 	// Temporary list
 	temp := List[T]{}
@@ -296,38 +296,38 @@ func (list *List[T]) merge(lo, hi int) {
 
 	for v1 != v2 && v2 != e {
 		if v1.val < v2.val {
-			iter.add(v1.val)
-			i1.remove()
-			v1, _ = i1.next()
+			iter.Add(v1.val)
+			i1.Remove()
+			v1, _ = i1.Next()
 		} else {
-			iter.add(v2.val)
-			i2.remove()
-			v2, _ = i2.next()
+			iter.Add(v2.val)
+			i2.Remove()
+			v2, _ = i2.Next()
 		}
 	}
 
 	for v1 != e {
-		iter.add(v1.val)
-		i1.remove()
-		v1, _ = i1.next()
+		iter.Add(v1.val)
+		i1.Remove()
+		v1, _ = i1.Next()
 	}
-	s1.insertList(0, &temp)
+	s1.InsertList(0, &temp)
 }
 
 // Binary search for v (inefficient in linked list)
 // List must be sorted
 // Return index, (-insertion point-1) if not found
-func (list *List[T]) search(v T) int {
-	hi := list.length() - 1
+func (list *List[T]) Search(v T) int {
+	hi := list.Length() - 1
 	lo := 0
 	prev := Iterator[T]{list, nil}
 	iter := Iterator[T]{list, nil}
 	for hi >= lo {
 		mid := (hi + lo) / 2
 		for i := lo; i < mid; i++ {
-			iter.next()
+			iter.Next()
 		}
-		ml, _ := iter.next()
+		ml, _ := iter.Next()
 		m := ml.val
 		if v > m {
 			lo = mid + 1
@@ -343,390 +343,32 @@ func (list *List[T]) search(v T) int {
 }
 
 // Fisher-Yates shuffle
-func (list *List[T]) shuffle() {
+func (list *List[T]) Shuffle() {
 	rand.Seed(time.Now().UnixNano())
-	len := list.length()
+	len := list.Length()
 	for i := 0; i < len-1; i++ {
 		randi := rand.Intn(len-i) + i
-		val, _ := list.get(i)
-		swap, _ := list.set(randi, val)
-		list.set(i, swap)
+		val, _ := list.Get(i)
+		swap, _ := list.Set(randi, val)
+		list.Set(i, swap)
 	}
 }
 
 // Check if list sorted
-func (list *List[T]) sorted() bool {
-	list = list.next
-	for list != nil && list.next != nil {
-		if list.next.val < list.val {
+func (list *List[T]) Sorted() bool {
+	list = list.Next
+	for list != nil && list.Next != nil {
+		if list.Next.val < list.val {
 			return false
 		}
-		list = list.next
+		list = list.Next
 	}
 	return true
 }
 
 // Bogo sort
-func (list *List[T]) bogo() {
-	for !list.sorted() {
-		list.shuffle()
+func (list *List[T]) Bogo() {
+	for !list.Sorted() {
+		list.Shuffle()
 	}
-}
-
-// import package from github, helper package
-func main() {
-	// Initialize with dummy node
-	fmt.Println(red + "Initializing..." + reset)
-	var list List[int]
-	fmt.Println(list)
-	fmt.Println()
-
-	// Test append
-	appendTest(&list)
-
-	// Test delete
-	deleteTest(&list)
-
-	// Test set and error
-	setTest(&list)
-
-	// Test insert
-	// Note: Go does not support method overloading
-	insertTest(&list)
-
-	// Test indexOf
-	indexOfTest(&list)
-
-	// Test get (a bit late)
-	getTest(&list)
-
-	// Test variable arguments in add and insert
-	variableTest(&list)
-
-	// Test remove
-	removeTest(&list)
-
-	// Test length
-	lengthTest(&list)
-
-	// Test iterator
-	iteratorTest(&list)
-
-	// Test sublist
-	sublistTest(&list)
-
-	// Test insertList
-	insertListTest(&list)
-
-	// Test shuffle
-	shuffleTest(&list)
-
-	// Test merge sort
-	sortTest(&list)
-
-	// Test binary search
-	searchTest(&list)
-
-	// Test all with generic type
-	genericTest()
-
-	// Test bogo sort
-	bogoTest(&list)
-}
-
-// Colors
-var (
-	reset  = "\033[0m"
-	red    = "\033[31m"
-	green  = "\033[32m"
-	yellow = "\033[33m"
-	blue   = "\033[34m"
-	purple = "\033[35m"
-	cyan   = "\033[36m"
-	gray   = "\033[37m"
-	white  = "\033[97m"
-)
-
-func appendTest(list *List[int]) {
-	fmt.Println(red + "Testing append..." + reset)
-	fmt.Println(list)
-	fmt.Println("Add 1 and 2")
-	list.add(1)
-	list.add(2)
-	fmt.Println(list)
-	fmt.Println()
-}
-
-func deleteTest(list *List[int]) {
-	fmt.Println(red + "Testing delete..." + reset)
-	fmt.Println(list)
-	fmt.Println("Delete 1")
-	found := list.delete(1)
-	fmt.Println("Found:", found)
-	fmt.Println(list)
-	fmt.Println()
-}
-
-func setTest(list *List[int]) {
-	fmt.Println(red + "Testing set..." + reset)
-	fmt.Println(list)
-	fmt.Println("Set index 0 to 1")
-	elem, err := list.set(0, 1)
-	fmt.Println("Removed element:", elem)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-
-	fmt.Println("Set index 1 to 1")
-	elem, err = list.set(1, 1)
-	fmt.Println("Removed element:", elem)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-	fmt.Println()
-}
-
-func insertTest(list *List[int]) {
-	fmt.Println(red + "Testing insert..." + reset)
-	fmt.Println(list)
-	fmt.Println("Insert 2 at index 0")
-	err := list.insert(0, 2)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-
-	fmt.Println("Insert 3 at index 2")
-	err = list.insert(2, 3)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-
-	fmt.Println("Insert 4 at index 4")
-	err = list.insert(4, 4)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-	fmt.Println()
-}
-
-func indexOfTest(list *List[int]) {
-	fmt.Println(red + "Testing indexOf..." + reset)
-	fmt.Println(list)
-	fmt.Println("Index of 1")
-	index := list.indexOf(1)
-	fmt.Println("Index:", index)
-	fmt.Println(list)
-
-	fmt.Println("Index of 0")
-	index = list.indexOf(0)
-	fmt.Println("Index:", index)
-	fmt.Println(list)
-	fmt.Println()
-}
-
-func getTest(list *List[int]) {
-	fmt.Println(red + "Testing get..." + reset)
-	fmt.Println(list)
-	fmt.Println("Get index 0")
-	val, err := list.get(0)
-	fmt.Println("Value:", val)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-
-	fmt.Println("Get index 4")
-	val, err = list.get(4)
-	fmt.Println("Value:", val)
-	fmt.Println("Error:", err)
-	fmt.Println(list)
-	fmt.Println()
-}
-
-func variableTest(list *List[int]) {
-	fmt.Println(red + "Testing variable number of arguments..." + reset)
-	fmt.Println(list)
-	fmt.Println("Add 4 and 5")
-	list.add(4, 5)
-	fmt.Println(list)
-
-	fmt.Println("Insert 6 and 7 at index 0")
-	list.insert(0, 6, 7)
-	fmt.Println(list)
-	fmt.Println()
-}
-
-func removeTest(list *List[int]) {
-	fmt.Println(red + "Testing remove..." + reset)
-	fmt.Println(list)
-	fmt.Println("Remove index 3")
-	elem, err := list.remove(3)
-	fmt.Println(list)
-	fmt.Println("Removed element:", elem)
-	fmt.Println("Error:", err)
-
-	fmt.Println("Remove index 6")
-	elem, err = list.remove(6)
-	fmt.Println(list)
-	fmt.Println("Removed element:", elem)
-	fmt.Println("Error:", err)
-	fmt.Println()
-}
-
-func lengthTest(list *List[int]) {
-	fmt.Println(red + "Testing length..." + reset)
-	fmt.Println(list)
-	len := list.length()
-	fmt.Println("Length of list: ", len)
-	fmt.Println()
-}
-
-func iteratorTest(list *List[int]) {
-	fmt.Println(red + "Testing iterator..." + reset)
-	fmt.Println(list)
-	iter := Iterator[int]{list, nil}
-	fmt.Println("Get the next element")
-	val, err := iter.next()
-	fmt.Println(val.val)
-	fmt.Println("Error: ", err)
-	err = iter.remove()
-	fmt.Println("Remove the last returned element")
-	fmt.Println("Error: ", err)
-	fmt.Println(list)
-	err = iter.remove()
-	fmt.Println("Remove the last returned element")
-	fmt.Println("Error: ", err)
-	fmt.Println(list)
-	fmt.Println("Iterate through the list")
-	for iter.hasNext() {
-		val, err := iter.next()
-		fmt.Println(val.val)
-		fmt.Println("Error: ", err)
-	}
-	val, err = iter.next()
-	fmt.Println(val)
-	fmt.Println("Error: ", err)
-	fmt.Println()
-}
-
-func sublistTest(list *List[int]) {
-	fmt.Println(red + "Testing sublist..." + reset)
-	fmt.Println(list)
-	fmt.Println("Sublist starting from 0")
-	li, err := list.sublist(0)
-	fmt.Println(li)
-	fmt.Println("Error: ", err)
-	fmt.Println("Sublist starting from 1")
-	li, err = list.sublist(1)
-	fmt.Println(li)
-	fmt.Println("Error: ", err)
-	fmt.Println("Sublist starting from 4")
-	li, err = list.sublist(4)
-	fmt.Println(li)
-	fmt.Println("Error: ", err)
-	fmt.Println("Sublist starting from 5")
-	li, err = list.sublist(5)
-	fmt.Println(li)
-	fmt.Println("Error: ", err)
-	fmt.Println()
-}
-
-func insertListTest(list *List[int]) {
-	fmt.Println(red + "Testing insertList..." + reset)
-	fmt.Println(list)
-	list2 := List[int]{}
-	list2.add(8, 9, 1)
-	fmt.Println("Insert", list2, "at index 3")
-	err := list.insertList(3, &list2)
-	fmt.Println(list)
-	fmt.Println("Error: ", err)
-	list3 := List[int]{}
-	list3.add(6)
-	fmt.Println("Insert", list3, "at index 8")
-	err = list.insertList(8, &list3)
-	fmt.Println(list)
-	fmt.Println("Error: ", err)
-	fmt.Println()
-}
-
-func shuffleTest(list *List[int]) {
-	fmt.Println(red + "Testing shuffle..." + reset)
-	fmt.Println(list)
-	fmt.Println("Shuffle list")
-	list.shuffle()
-	fmt.Println(list)
-	fmt.Println()
-}
-
-func sortTest(list *List[int]) {
-	fmt.Println(red + "Testing merge sort..." + reset)
-	fmt.Println(list)
-	fmt.Println("Sort list")
-	list.sort()
-	fmt.Println(list)
-	fmt.Println()
-}
-
-func searchTest(list *List[int]) {
-	fmt.Println(red + "Testing binary search..." + reset)
-	fmt.Println(list)
-	for i := 1; i <= 9; i++ {
-		fmt.Println("Search for", i)
-		fmt.Println(list.search(i))
-	}
-	fmt.Println("Search for 0")
-	fmt.Println(list.search(0))
-	fmt.Println("Search for 10")
-	fmt.Println(list.search(10))
-	fmt.Println()
-}
-
-func genericTest() {
-	fmt.Println(red + "Testing generic types..." + reset)
-	fmt.Println(red + "Initialize" + reset)
-	var strings List[string]
-	fmt.Println(strings)
-	fmt.Println(red + "Append" + reset)
-	strings.add("goodbye", "cruel", "world")
-	fmt.Println(strings)
-	fmt.Println(red + "Delete" + reset)
-	strings.delete("cruel")
-	fmt.Println(strings)
-	fmt.Println(red + "Set" + reset)
-	strings.set(0, "hello")
-	fmt.Println(strings)
-	fmt.Println(red + "Insert" + reset)
-	strings.insert(1, "big", "beautiful")
-	fmt.Println(strings)
-	fmt.Println(red + "IndexOf" + reset)
-	fmt.Println(strings.indexOf("world"))
-	fmt.Println(red + "Get" + reset)
-	str, err := strings.get(0)
-	fmt.Println(str)
-	fmt.Println("Error: ", err)
-	fmt.Println(red + "Remove" + reset)
-	strings.remove(1)
-	fmt.Println(strings)
-	strings.clear()
-	fmt.Println(red + "Shuffle" + reset)
-	for c := 'A'; c <= 'Z'; c++ {
-		strings.add(string(c))
-	}
-	for c := 'a'; c <= 'z'; c++ {
-		strings.add(string(c))
-	}
-	strings.shuffle()
-	fmt.Println(strings)
-	fmt.Println(red + "Sort" + reset)
-	strings.sort()
-	fmt.Println(strings)
-	fmt.Println(red + "Search" + reset)
-	fmt.Println(strings.search("A"))
-	fmt.Println(strings.search("a"))
-	fmt.Println(strings.search("z"))
-	fmt.Println(strings.search("0"))
-	fmt.Println()
-}
-
-func bogoTest(list *List[int]) {
-	fmt.Println(red + "Testing bogo sort..." + reset)
-	list.shuffle()
-	fmt.Println(list)
-	fmt.Println("Bogo sort")
-	list.bogo()
-	fmt.Println(list)
-	fmt.Println()
 }
