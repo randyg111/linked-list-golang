@@ -320,13 +320,21 @@ func (list *List[T]) merge(lo, hi int) {
 func (list *List[T]) search(v T) int {
 	hi := list.length() - 1
 	lo := 0
+	prev := Iterator[T]{list, nil}
+	iter := Iterator[T]{list, nil}
 	for hi >= lo {
 		mid := (hi + lo) / 2
-		m, _ := list.get(mid)
+		for i := lo; i < mid; i++ {
+			iter.next()
+		}
+		ml, _ := iter.next()
+		m := ml.val
 		if v > m {
 			lo = mid + 1
+			prev = iter
 		} else if v < m {
 			hi = mid - 1
+			iter = prev
 		} else {
 			return mid
 		}
