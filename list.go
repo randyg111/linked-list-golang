@@ -35,6 +35,28 @@ type Iterator[T constraints.Ordered] struct {
 	ret  *List[T]
 }
 
+// Return error message for IndexError
+func (e *IndexError) Error() string {
+	return fmt.Sprintf("Index %v out of bounds in list", e.index)
+}
+
+// Return error message for InvalidError
+func (e *InvalidError) Error() string {
+	return fmt.Sprintf("Invalid operation: %v\nReason: %v", e.op, e.reason)
+}
+
+// Add element with iterator
+func (iter *Iterator[T]) Add(v T) {
+	if iter.ret == nil {
+		iter.list.next = &List[T]{iter.list.next, v}
+		iter.list = iter.list.next
+	} else {
+		iter.list.next.next = &List[T]{iter.list.next.next, v}
+		iter.list = iter.list.next.next
+		iter.ret = nil
+	}
+}
+
 // Return whether iterator has next element
 func (iter *Iterator[T]) HasNext() bool {
 	return iter.list != nil && iter.list.next != nil && (iter.ret == nil || iter.list.next.next != nil)
@@ -63,43 +85,6 @@ func (iter *Iterator[T]) Remove() error {
 	return nil
 }
 
-// Add element with iterator
-func (iter *Iterator[T]) Add(v T) {
-	if iter.list.next == nil {
-		iter.list.next = &List[T]{nil, v}
-		iter.list = iter.list.next
-	} else {
-		iter.list.next.next = &List[T]{iter.list.next.next, v}
-		iter.list = iter.list.next.next
-		iter.ret = nil
-	}
-}
-
-// Return error message
-func (e *IndexError) Error() string {
-	return fmt.Sprintf("Index %v out of bounds in list", e.index)
-}
-
-// Return error message
-func (e *InvalidError) Error() string {
-	return fmt.Sprintf("Invalid operation: %v\nReason: %v", e.op, e.reason)
-}
-
-// Convert list to a string
-func (list List[_]) String() string {
-	if list.next == nil {
-		return "[]"
-	}
-	list = *list.next
-	s := fmt.Sprintf("[%v", list.val)
-	for list.next != nil {
-		list = *list.next
-		s += fmt.Sprintf(", %v", list.val)
-	}
-	s += "]"
-	return s
-}
-
 // Append values to the list
 func (list *List[T]) Add(vs ...T) {
 	for list.next != nil {
@@ -109,6 +94,30 @@ func (list *List[T]) Add(vs ...T) {
 		list.next = &List[T]{nil, v}
 		list = list.next
 	}
+}
+
+// Bogo sort
+func (list *List[T]) Bogo() {
+	for !list.Sorted() {
+		list.Shuffle()
+	}
+}
+
+// Clear list
+func (list *List[_]) Clear() {
+	list.next = nil
+}
+
+// Copy list to a new list
+func (list *List[T]) Copy() List[T] {
+	copy := List[T]{nil, list.val}
+	next := &copy
+	for list.next != nil {
+		next.next = &List[T]{nil, list.next.val}
+		next = next.next
+		list = list.next
+	}
+	return copy
 }
 
 // Delete the first occurence of v,
@@ -125,9 +134,9 @@ func (list *List[T]) Delete(v T) bool {
 	return false
 }
 
-// Set index to v,
+// Get value at index,
 // Return error if index out of bounds
-func (list *List[T]) Set(index int, v T) (T, error) {
+func (list *List[T]) Get(index int) (T, error) {
 	if index < 0 || index >= list.Length() {
 		var fail T
 		return fail, &IndexError{index}
@@ -135,9 +144,21 @@ func (list *List[T]) Set(index int, v T) (T, error) {
 	for i := 0; i <= index; i++ {
 		list = list.next
 	}
-	old := list.val
-	list.val = v
-	return old, nil
+	return list.val, nil
+}
+
+// Return index of v, or -1 if not found
+func (list *List[T]) IndexOf(v T) int {
+	list = list.next
+	i := 0
+	for list != nil {
+		if list.val == v {
+			return i
+		}
+		list = list.next
+		i++
+	}
+	return -1
 }
 
 // Insert values at index,
@@ -163,89 +184,6 @@ func (list *List[T]) Insert(index int, vs ...T) error {
 	return nil
 }
 
-// Return index of v, -1 if not found
-func (list *List[T]) IndexOf(v T) int {
-	list = list.next
-	i := 0
-	for list != nil {
-		if list.val == v {
-			return i
-		}
-		list = list.next
-		i++
-	}
-	return -1
-}
-
-// Get value at index,
-// Return error if index out of bounds
-func (list *List[T]) Get(index int) (T, error) {
-	if index < 0 || index >= list.Length() {
-		var fail T
-		return fail, &IndexError{index}
-	}
-	for i := 0; i <= index; i++ {
-		list = list.next
-	}
-	return list.val, nil
-}
-
-// Remove element at index,
-// Return error if index out of bounds
-func (list *List[T]) Remove(index int) (T, error) {
-	if index < 0 || index >= list.Length() {
-		var fail T
-		return fail, &IndexError{index}
-	}
-	for i := 0; i < index; i++ {
-		list = list.next
-	}
-	old := list.next.val
-	list.next = list.next.next
-	return old, nil
-}
-
-// Copy list to a new list
-func (list *List[T]) Copy() List[T] {
-	copy := List[T]{nil, list.val}
-	next := &copy
-	for list.next != nil {
-		next.next = &List[T]{nil, list.next.val}
-		next = next.next
-		list = list.next
-	}
-	return copy
-}
-
-// Return length of list
-func (list *List[_]) Length() int {
-	len := 0
-	for list.next != nil {
-		list = list.next
-		len++
-	}
-	return len
-}
-
-// Clear list
-func (list *List[_]) Clear() {
-	list.next = nil
-}
-
-// Return sublist starting at index
-func (list *List[T]) Sublist(index int) (*List[T], error) {
-	len := list.Length()
-	if index < 0 || index > len {
-		return nil, &IndexError{index}
-	}
-	// List starts 1 before index
-	index--
-	for i := 0; i <= index; i++ {
-		list = list.next
-	}
-	return list, nil
-}
-
 // Insert list at index
 func (list *List[T]) InsertList(index int, other *List[T]) error {
 	if index < 0 || index > list.Length() {
@@ -266,6 +204,86 @@ func (list *List[T]) InsertList(index int, other *List[T]) error {
 		other.next = next
 	}
 	return nil
+}
+
+// Return length of list
+func (list *List[_]) Length() int {
+	len := 0
+	for list.next != nil {
+		list = list.next
+		len++
+	}
+	return len
+}
+
+// Remove element at index,
+// Return error if index out of bounds
+func (list *List[T]) Remove(index int) (T, error) {
+	if index < 0 || index >= list.Length() {
+		var fail T
+		return fail, &IndexError{index}
+	}
+	for i := 0; i < index; i++ {
+		list = list.next
+	}
+	old := list.next.val
+	list.next = list.next.next
+	return old, nil
+}
+
+// Binary search for v (inefficient in linked list),
+// List must be sorted,
+// Return index, or (-insertion point-1) if not found
+func (list *List[T]) Search(v T) int {
+	hi := list.Length() - 1
+	lo := 0
+	prev := Iterator[T]{list, nil}
+	iter := Iterator[T]{list, nil}
+	for hi >= lo {
+		mid := (hi + lo) / 2
+		for i := lo; i < mid; i++ {
+			iter.Next()
+		}
+		ml, _ := iter.Next()
+		m := ml.val
+		if v > m {
+			lo = mid + 1
+			prev = iter
+		} else if v < m {
+			hi = mid - 1
+			iter = prev
+		} else {
+			return mid
+		}
+	}
+	return -(lo + 1)
+}
+
+// Set index to v,
+// Return error if index out of bounds
+func (list *List[T]) Set(index int, v T) (T, error) {
+	if index < 0 || index >= list.Length() {
+		var fail T
+		return fail, &IndexError{index}
+	}
+	for i := 0; i <= index; i++ {
+		list = list.next
+	}
+	old := list.val
+	list.val = v
+	return old, nil
+}
+
+// Fisher-Yates shuffle
+func (list *List[T]) Shuffle() {
+	rand.Seed(time.Now().UnixNano())
+	len := list.Length()
+	for i := 0; i < len-1; i++ {
+		randi := rand.Intn(len-i) + i
+		val, _ := list.Get(i)
+		swap, _ := list.Set(randi, val)
+		list.Set(i, swap)
+	}
 }
 
 // Merge sort the list
@@ -326,46 +344,6 @@ func (list *List[T]) merge(lo, hi int) {
 	s1.InsertList(0, &temp)
 }
 
-// Binary search for v (inefficient in linked list)
-// List must be sorted
-// Return index, (-insertion point-1) if not found
-func (list *List[T]) Search(v T) int {
-	hi := list.Length() - 1
-	lo := 0
-	prev := Iterator[T]{list, nil}
-	iter := Iterator[T]{list, nil}
-	for hi >= lo {
-		mid := (hi + lo) / 2
-		for i := lo; i < mid; i++ {
-			iter.Next()
-		}
-		ml, _ := iter.Next()
-		m := ml.val
-		if v > m {
-			lo = mid + 1
-			prev = iter
-		} else if v < m {
-			hi = mid - 1
-			iter = prev
-		} else {
-			return mid
-		}
-	}
-	return -(lo + 1)
-}
-
-// Fisher-Yates shuffle
-func (list *List[T]) Shuffle() {
-	rand.Seed(time.Now().UnixNano())
-	len := list.Length()
-	for i := 0; i < len-1; i++ {
-		randi := rand.Intn(len-i) + i
-		val, _ := list.Get(i)
-		swap, _ := list.Set(randi, val)
-		list.Set(i, swap)
-	}
-}
-
 // Check if list sorted
 func (list *List[T]) Sorted() bool {
 	list = list.next
@@ -378,9 +356,31 @@ func (list *List[T]) Sorted() bool {
 	return true
 }
 
-// Bogo sort
-func (list *List[T]) Bogo() {
-	for !list.Sorted() {
-		list.Shuffle()
+// Convert list to a string
+func (list List[_]) String() string {
+	if list.next == nil {
+		return "[]"
 	}
+	list = *list.next
+	s := fmt.Sprintf("[%v", list.val)
+	for list.next != nil {
+		list = *list.next
+		s += fmt.Sprintf(", %v", list.val)
+	}
+	s += "]"
+	return s
+}
+
+// Return sublist starting at index
+func (list *List[T]) Sublist(index int) (*List[T], error) {
+	len := list.Length()
+	if index < 0 || index > len {
+		return nil, &IndexError{index}
+	}
+	// List starts 1 before index
+	index--
+	for i := 0; i <= index; i++ {
+		list = list.next
+	}
+	return list, nil
 }
