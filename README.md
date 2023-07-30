@@ -11,4 +11,6 @@
  - Iterator for efficient traversal of list
  - Returns error when index out of bounds or invalid operation
 
+See [list-tester-golang](https://github.com/randyg111/list-tester-golang) for an example of how to import and use the linked list
+
 Learn about Go with [A Tour of Go](https://go.dev/tour/list)
